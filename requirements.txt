@@ -1,7 +1,9 @@
 streamlit
+streamlit-audiorecorder
 numpy
 librosa
 soundfile
 scikit-learn
 joblib
 tensorflow
+
