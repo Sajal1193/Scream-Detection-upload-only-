@@ -29,6 +29,7 @@ def extract_features(file_path_or_bytes):
         return None
 
 def load_data(data_dir):
+    """Load dataset for training."""
     features, labels = [], []
     for subdir, dirs, files in os.walk(data_dir):
         for file in files:
@@ -41,6 +42,7 @@ def load_data(data_dir):
     return np.array(features), np.array(labels)
 
 def train_model():
+    """Train SVM model on dataset."""
     data_dir = 'assets/positive'  # adjust if needed
     X, y = load_data(data_dir)
     if len(X) == 0:
@@ -57,6 +59,7 @@ def train_model():
     return model, accuracy, report
 
 def predict_scream(model, file_bytes):
+    """Predict scream from uploaded audio."""
     features = extract_features(file_bytes)
     if features is not None:
         features = features.reshape(1, -1)
@@ -71,13 +74,14 @@ def predict_scream(model, file_bytes):
 # -----------------------------
 
 st.set_page_config(page_title="Scream Detection App", page_icon="🔊", layout="wide")
-st.title("🔊 Scream Detection and Analysis System")
-st.write("Upload a short audio clip (~2 seconds) to detect scream sounds.")
 
-# Sidebar training
+st.title("🔊 Scream Detection and Analysis System")
+st.write("Upload an audio file to detect if it contains a scream sound.")
+
+# Sidebar training section
 st.sidebar.header("🧠 Model Training")
 if st.sidebar.button("Train Model"):
-    with st.spinner("Training model..."):
+    with st.spinner("Training model... Please wait..."):
         model, accuracy, report = train_model()
         if model:
             joblib.dump(model, "model.pkl")
@@ -91,17 +95,13 @@ else:
     else:
         st.sidebar.warning("Please train the model first.")
 
-# -----------------------------
 # Upload audio for prediction
-# -----------------------------
-st.subheader("🎵 Upload 2-second Audio File for Detection")
-st.info("Please record a short audio clip (~2 seconds) on your device and upload it here.")
-
-audio_file = st.file_uploader("Choose a WAV or MP3 file", type=["wav", "mp3"])
+st.subheader("🎵 Upload Audio File for Detection")
+audio_file = st.file_uploader("Choose an audio file (WAV or MP3)", type=["wav", "mp3"])
 
 if audio_file and 'model' in locals():
     st.audio(audio_file)
-    with st.spinner("Analyzing audio..."):
+    with st.spinner("Analyzing..."):
         prediction, probability = predict_scream(model, io.BytesIO(audio_file.read()))
         if prediction is not None:
             if prediction == 1:
@@ -110,6 +110,8 @@ if audio_file and 'model' in locals():
                 st.success(f"✅ No scream detected. Probability: {probability:.2f}")
         else:
             st.warning("Could not process the file.")
+elif audio_file:
+    st.warning("⚠️ Please train or load the model first.")
 
 # Footer
 st.markdown("---")
