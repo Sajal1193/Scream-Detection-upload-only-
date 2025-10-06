@@ -8,7 +8,6 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import os
-import sounddevice as sd
 
 # -----------------------------
 # Helper functions
@@ -73,7 +72,7 @@ def predict_scream(model, file_bytes):
 
 st.set_page_config(page_title="Scream Detection App", page_icon="🔊", layout="wide")
 st.title("🔊 Scream Detection and Analysis System")
-st.write("Upload an audio file or record live to detect scream sounds.")
+st.write("Upload a short audio clip (~2 seconds) to detect scream sounds.")
 
 # Sidebar training
 st.sidebar.header("🧠 Model Training")
@@ -95,12 +94,14 @@ else:
 # -----------------------------
 # Upload audio for prediction
 # -----------------------------
-st.subheader("🎵 Upload Audio File")
-audio_file = st.file_uploader("Choose an audio file (WAV or MP3)", type=["wav", "mp3"])
+st.subheader("🎵 Upload 2-second Audio File for Detection")
+st.info("Please record a short audio clip (~2 seconds) on your device and upload it here.")
+
+audio_file = st.file_uploader("Choose a WAV or MP3 file", type=["wav", "mp3"])
 
 if audio_file and 'model' in locals():
     st.audio(audio_file)
-    with st.spinner("Analyzing..."):
+    with st.spinner("Analyzing audio..."):
         prediction, probability = predict_scream(model, io.BytesIO(audio_file.read()))
         if prediction is not None:
             if prediction == 1:
@@ -109,43 +110,6 @@ if audio_file and 'model' in locals():
                 st.success(f"✅ No scream detected. Probability: {probability:.2f}")
         else:
             st.warning("Could not process the file.")
-
-# -----------------------------
-# Live 2-second recording
-# -----------------------------
-st.subheader("🎤 Record Live Audio (2 seconds)")
-
-if st.button("Record"):
-    st.info("Recording for 2 seconds...")
-    duration = 2  # seconds
-    fs = 22050    # sampling rate
-
-    try:
-        audio_data = sd.rec(int(duration * fs), samplerate=fs, channels=1)
-        sd.wait()
-        audio_data = np.squeeze(audio_data)
-        
-        # Convert to WAV bytes
-        wav_bytes = io.BytesIO()
-        sf.write(wav_bytes, audio_data, fs, format='WAV')
-        wav_bytes.seek(0)
-        
-        st.audio(wav_bytes)
-
-        if 'model' in locals():
-            with st.spinner("Analyzing recorded audio..."):
-                prediction, probability = predict_scream(model, wav_bytes)
-                if prediction is not None:
-                    if prediction == 1:
-                        st.error(f"🚨 Scream detected! Probability: {probability:.2f}")
-                    else:
-                        st.success(f"✅ No scream detected. Probability: {probability:.2f}")
-                else:
-                    st.warning("Could not process the recorded audio.")
-        else:
-            st.warning("⚠️ Please train or load the model first.")
-    except Exception as e:
-        st.error(f"Recording failed: {e}")
 
 # Footer
 st.markdown("---")
