@@ -113,6 +113,34 @@ if audio_file and 'model' in locals():
 elif audio_file:
     st.warning("⚠️ Please train or load the model first.")
 
+from streamlit_audiorecorder import audiorecorder
+
+st.subheader("🎤 Record Live Audio (2 seconds)")
+
+# Record audio
+audio_data = audiorecorder("Click to record", "Recording...")
+
+if len(audio_data) > 0:
+    st.audio(audio_data, format="audio/wav")
+    
+    # Analyze recorded audio
+    if 'model' in locals():
+        with st.spinner("Analyzing recorded audio..."):
+            prediction, probability = predict_scream(model, io.BytesIO(audio_data))
+            if prediction is not None:
+                if prediction == 1:
+                    st.error(f"🚨 Scream detected! Probability: {probability:.2f}")
+                else:
+                    st.success(f"✅ No scream detected. Probability: {probability:.2f}")
+            else:
+                st.warning("Could not process the recorded audio.")
+    else:
+        st.warning("⚠️ Please train or load the model first.")
+
+
+
+
 # Footer
 st.markdown("---")
 st.caption("Developed by **Sajal Kumar Jha** | Scream Detection for Crime Control Project")
+
